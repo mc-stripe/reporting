@@ -201,7 +201,7 @@ end
   sales_activation_date,
   case when datediff('d', sales_activation_date, capture_date) >= 0 and datediff('d', sales_activation_date, capture_date) < 91 then 1 else 0 end as ninety_day_live,
   case when datediff('d', sales_activation_date, capture_date) >= 0 and datediff('d', sales_activation_date, capture_date) < 366 then 1 else 0 end as first_year_sold,
-  COALESCE(SUM(total_npv), 0) AS npv_fixed_fx  
+  COALESCE(SUM(first_year_sold_npv_usd_fx), 0) AS npv_fixed_fx  
 FROM processing_volume pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
