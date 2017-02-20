@@ -6,7 +6,7 @@ I have found doing this is much faster than joining on usertables.
 -- load the upsells table and only include the ones that have an start date in the past
 -- this table is available (https://docs.google.com/spreadsheets/d/10wzAcpwksW1reaGA7bKBQDiLDLVrOlnKcvuk1JTqocI/edit)
 with current_upsells as (
-select * from usertables.mc_upsell_csv where include = 1 
+select * from usertables.mc_upsells_csv where include = 1 
 ),
 -- load backlog curve, this determines the backlog 
 backlog_curve as (
