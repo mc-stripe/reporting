@@ -1,5 +1,4 @@
 
-
 /** for faster access put usertables in memory **/ 
 -- backlog
 with backlog_curve as (
@@ -37,8 +36,8 @@ SELECT
          else 'lost' end as opportunity_status, 
     opportunity_industry AS "vertical",
     salesforcemerchants.opportunity_merchant_country AS "opportunity_merchant_country",
-    case when DATE(merchants.unified_funnel__activation_date) < '2017-01-28' THEN 1 ELSE 0 END AS "live_or_not",
-    DATE(merchants.unified_funnel__activation_date) AS "unified_funnel__activation_date_date",
+    case when DATE(merchants.sales_funnel__activation_date) < '2017-02-19' THEN 1 ELSE 0 END AS "live_or_not", -- check
+    DATE(merchants.sales_funnel__activation_date) AS "unified_funnel__activation_date_date",
     --salesforcemerchants.opportunity_stage AS "opportunity_stage",
     (COALESCE(COALESCE( ( SUM(DISTINCT (CAST(FLOOR(COALESCE(salesforcemerchants.opportunity_amount,0)*(1000000*1.0)) AS DECIMAL(38,0))) + CAST(STRTOL(LEFT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))* 1.0e8 + CAST(STRTOL(RIGHT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0)) ) - SUM(DISTINCT CAST(STRTOL(LEFT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))* 1.0e8 + CAST(STRTOL(RIGHT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))) )  / (1000000*1.0), 0), 0))*(avg(opportunity_probability)/100) AS "mes_opportunity_amount",
     COALESCE(SUM(datediff (days, opportunity_close_date, getdate())), 0) AS "days_since_close_date"
@@ -50,8 +49,8 @@ NEED TO UPDATE DATES BELOW
 ********/
     
     
-(merchants.sales_funnel__activation_date IS NULL OR merchants.sales_funnel__activation_date >= TIMESTAMP '2017-02-12')
-AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-02-06' -- include things that may be going live this week
+(merchants.sales_funnel__activation_date IS NULL OR merchants.sales_funnel__activation_date >= TIMESTAMP '2017-02-19')
+AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-02-19' -- include things that may be going live this week
 AND salesforcemerchants.opportunity_expected_go_live_date <= TIMESTAMP '2017-12-31' -- include all opportunities expected to live this year
 AND salesforcemerchants.opportunity_stage in ('Negotiating', 'Discovering Needs', 'Validating Fit', 'Proposing Solution', 'Onboarding', 'Live')
 
@@ -68,7 +67,7 @@ select
   to_char(date_trunc('year', fcst_date),'YYYY') as year,
   to_char(date_trunc('quarter', fcst_date), 'YYYY-MM') as quarter,
   to_char(date_trunc('week', fcst_date + '1 day'::interval)::date - '1 day'::interval,'YYYY-MM-DD') as finance_week,
-  case when date_trunc('quarter', fcst_date) = date_trunc('quarter', CURRENT_DATE) then 1 else 0 end as qtd, 
+  0 as qtd, 
   case when date_trunc('week', fcst_date + '1 day'::interval)::date - '1 day'::interval = date_trunc('week', dateadd('day',-3, CURRENT_DATE) + '1 day'::interval)::date - '1 day'::interval then 1 else 0 end as this_week, 
   cc.sales_region as region,
   cc.sfdc_country_name as country,
@@ -81,6 +80,11 @@ select
   when cc.sales_region = 'UK' and vertical in ('Ticketing & Events', 'Travel & Hosp') then 'Ticketing/Travel'
   when cc.sales_region = 'UK' and vertical in ('Financial') then 'Financial Services'
   when cc.sales_region = 'UK' and vertical in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate') then 'Services, Software & Content'
+  when cc.sales_region = 'UK' and vertical in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
+  when cc.sales_region = 'UK' and vertical in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
+  
+  
+  
   -- US/CA
   when cc.sfdc_country_name = 'United States' and vertical in ('B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)') then 'Software & Content'
   when cc.sfdc_country_name = 'United States' and  vertical in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate') then 'Services'
@@ -108,6 +112,9 @@ case
   when cc.sales_region = 'UK' and vertical in ('Ticketing & Events', 'Travel & Hosp') then 'Ticketing/Travel'
   when cc.sales_region = 'UK' and vertical in ('Financial') then 'Financial Services'
   when cc.sales_region = 'UK' and vertical in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate') then 'Services, Software & Content'
+  when cc.sales_region = 'UK' and vertical in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
+  when cc.sales_region = 'UK' and vertical in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
+  
   -- Standard verticals
   when vertical in ('B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)') then 'Software & Content'
   when vertical in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate')
@@ -132,5 +139,3 @@ FROM daily_pipeline dp
 JOIN country_code as cc ON dp.merchant_country = cc.sfdc_country_name
 JOIN team_role as usr ON usr.sales_owner = dp.owner
 GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
-
-
