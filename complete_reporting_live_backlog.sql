@@ -90,12 +90,10 @@ select * from upsell_processing ),
 
 /********************************************
 ********************************************
-
 CHANGE DATES BELOW TO REPORTING DATE (TWO PLACES)
 We have to do this because if you use the max of the capture date and there are gaps in processing days
 we will miscalculate the days_since_activation. We could use a dynamic CURRENT_DATE - 1 or something,
 but this could be prown to errors also. 
-
 ********************************************
 ********************************************/
 backlog_summary as (
@@ -103,7 +101,7 @@ select
 sales_merchant_id,
 sales_category, 
 sales_activation_date,
-datediff('day', pv.sales_activation_date, '2017-02-12') as days_since_activation,      -- UPDATE THIS
+datediff('day', pv.sales_activation_date, '2017-02-19') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
 first_year_npv,
 first_year_npv/first_year_sold_cumulative_pct as first_year_est_npv
 from
@@ -115,7 +113,7 @@ sum(first_year_sold_npv_usd_fx) as first_year_npv
 from processing_volume group by 1,2,3) pv 
 
 
-inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-02-12')  -- UPDATE THIS
+inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-02-19')  -- HAVE TO SPECIFY THE DATE
 where first_year_npv > 0),
 
 daily_backlog as (select
@@ -218,7 +216,7 @@ select
   to_char(date_trunc('quarter', fcst_date), 'YYYY-MM') as quarter,
   to_char(date_trunc('week', fcst_date + '1 day'::interval)::date - '1 day'::interval,'YYYY-MM-DD') as finance_week,
   0 as qtd, 
-  case when date_trunc('week', fcst_date + '1 day'::interval)::date - '1 day'::interval = date_trunc('week', dateadd('day',-3, CURRENT_DATE) + '1 day'::interval)::date - '1 day'::interval then 1 else 0 end as this_week, 
+  0 as this_week, 
   cc.sales_region as region,
   cc.sfdc_country_name as country,
   '' as sales_channel,
@@ -230,6 +228,11 @@ select
   when cc.sales_region = 'UK' and m.sales__industry in ('Ticketing & Events', 'Travel & Hosp') then 'Ticketing/Travel'
   when cc.sales_region = 'UK' and m.sales__industry in ('Financial') then 'Financial Services'
   when cc.sales_region = 'UK' and m.sales__industry in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate') then 'Services, Software & Content'
+  when cc.sales_region = 'UK' and m.sales__industry in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
+  when cc.sales_region = 'UK' and m.sales__industry in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
+
+
+
   -- US/CA
   when cc.sfdc_country_name = 'United States' and m.sales__industry in ('B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)') then 'Software & Content'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate') then 'Services'
@@ -257,6 +260,8 @@ case
   when cc.sales_region = 'UK' and m.sales__industry in ('Ticketing & Events', 'Travel & Hosp') then 'Ticketing/Travel'
   when cc.sales_region = 'UK' and m.sales__industry in ('Financial') then 'Financial Services'
   when cc.sales_region = 'UK' and m.sales__industry in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate') then 'Services, Software & Content'
+  when cc.sales_region = 'UK' and m.sales__industry in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
+  when cc.sales_region = 'UK' and m.sales__industry in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   -- Standard verticals
   when m.sales__industry in ('B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)') then 'Software & Content'
   when m.sales__industry in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate')
