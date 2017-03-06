@@ -161,9 +161,9 @@ select
   -- SouthernEU
   when cc.sales_region = 'Southern EU' then cc.sfdc_country_name
   -- NorthernEU
-  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('DE','AT','CH') then 'DACH'
-  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('BE','NL','LU') then 'BENELUX'
-  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('NO', 'FI', 'SE', 'DK', 'IS') then 'BENELUX'  
+  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('Germany','Austria','Switzerland') then 'DACH'
+  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('Belgium','Netherlands','Luxembourg') then 'BENELUX'
+  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('Norway', 'Finland', 'Sweden', 'Denmark', 'Iceland') then 'NORDICS'  
   -- AU/NZ
   when cc.sales_region = 'AU' then cc.sfdc_country_name
   -- SG
@@ -199,12 +199,13 @@ end
   sales_activation_date,
   case when datediff('d', sales_activation_date, capture_date) >= 0 and datediff('d', sales_activation_date, capture_date) < 91 then 1 else 0 end as ninety_day_live,
   case when datediff('d', sales_activation_date, capture_date) >= 0 and datediff('d', sales_activation_date, capture_date) < 366 then 1 else 0 end as first_year_sold,
-  COALESCE(SUM(first_year_sold_npv_usd_fx), 0) AS npv_fixed_fx  
+  COALESCE(SUM(first_year_sold_npv_usd_fx), 0) AS npv_fixed_fx,
+  case when sales_activation_date >= '2017-01-01' and sales_category = 'new biz' then 1 else 0 end as newNPV
 FROM processing_volume pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
 JOIN team_role as usr ON usr.sales_owner = m.sales__owner
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22
 
 
 
@@ -281,9 +282,10 @@ end
   sales_activation_date,
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 91 then 1 else 0 end as ninety_day_live,
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 366 then 1 else 0 end as first_year_sold,
-  COALESCE(SUM(backlog_npv), 0) AS npv_fixed_fx  
+  COALESCE(SUM(backlog_npv), 0) AS npv_fixed_fx,
+  case when sales_activation_date >= '2017-01-01' and sales_category = 'new biz' then 1 else 0 end as newNPV
 FROM daily_backlog pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
 JOIN team_role as usr ON usr.sales_owner = m.sales__owner
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22
