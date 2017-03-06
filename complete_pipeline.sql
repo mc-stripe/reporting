@@ -22,6 +22,7 @@ pipe.opportunity_merchant_country as merchant_country,
 pipe.vertical as vertical,
 pipe.opportunity_status as opportunity_status,
 pipe.opportunity_expected_go_live_date_date as sales_activation_date,
+pipe.opportunity_type,
 (pipe.mes_opportunity_amount)*first_year_sold_pct as pipeline_npv
 from ( 
 SELECT 
@@ -29,6 +30,7 @@ SELECT
     salesforcemerchants.opportunity_name AS "opportunity_name",
     DATE(salesforcemerchants.opportunity_close_date) AS "opportunity_close_date_date",
     salesforcemerchants.opportunity_owner AS "opportunity_owner",
+    salesforcemerchants.opportunity_type AS "opportunity_type",
     DATE(salesforcemerchants.opportunity_expected_go_live_date) AS "opportunity_expected_go_live_date_date",
     -- deal signed not live OR pipeline
     case when salesforcemerchants.opportunity_stage in ('Negotiating', 'Discovering Needs', 'Validating Fit', 'Proposing Solution')  THEN 'pipeline'
@@ -54,7 +56,7 @@ AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-02-
 AND salesforcemerchants.opportunity_expected_go_live_date <= TIMESTAMP '2017-12-31' -- include all opportunities expected to live this year
 AND salesforcemerchants.opportunity_stage in ('Negotiating', 'Discovering Needs', 'Validating Fit', 'Proposing Solution', 'Onboarding', 'Live')
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11
 ORDER BY 8
  )  as pipe 
 cross join usertables.day_backlog_curve as curve
@@ -134,8 +136,9 @@ end
   sales_activation_date,
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 91 then 1 else 0 end as ninety_day_live,
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 366 then 1 else 0 end as first_year_sold,
-  COALESCE(SUM(pipeline_npv), 0) AS npv_fixed_fx  
+  COALESCE(SUM(pipeline_npv), 0) AS npv_fixed_fx,
+  case when sales_activation_date >= '2017-01-01' AND opportunity_type <> 'Existing Customer' then 1 else 0 end as newNPV
 FROM daily_pipeline dp
 JOIN country_code as cc ON dp.merchant_country = cc.sfdc_country_name
 JOIN team_role as usr ON usr.sales_owner = dp.owner
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, 22
