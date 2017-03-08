@@ -65,7 +65,7 @@ end AS sub_region,
 opportunity_stage,
 opportunity_probability,
 opportunity_amount,
-opportunity_probability*opportunity_amount as  wgted_opportunity_amount,
+opportunity_probability*opportunity_amount/100 as  wgted_opportunity_amount,
 case when to_char(date_trunc('week', opportunity_created_date + '1 day'::interval)::date - '1 day'::interval,'YYYY-MM-DD') = '2017-02-26' then 1 else 0 end as created_this_week,
 case when to_char(date_trunc('week', opportunity_close_date + '1 day'::interval)::date - '1 day'::interval,'YYYY-MM-DD') = '2017-02-26'  then 1 else 0 end as closed_this_week,
 case when to_char(date_trunc('week', opportunity_expected_go_live_date + '1 day'::interval)::date - '1 day'::interval,'YYYY-MM-DD') = '2017-02-26'  then 1 else 0 end as live_this_week
