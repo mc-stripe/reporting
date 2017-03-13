@@ -81,7 +81,7 @@ select
   -- UK verticals
   when cc.sales_region = 'UK' and vertical in ('Ticketing & Events', 'Travel & Hosp') then 'Ticketing/Travel'
   when cc.sales_region = 'UK' and vertical in ('Financial') then 'Financial Services'
-  when cc.sales_region = 'UK' and vertical in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate') then 'Services, Software & Content'
+  when cc.sales_region = 'UK' and vertical in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate', 'On-Demand Services') then 'Services, Software & Content'
   when cc.sales_region = 'UK' and vertical in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sales_region = 'UK' and vertical in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   
@@ -89,7 +89,7 @@ select
   
   -- US/CA
   when cc.sfdc_country_name = 'United States' and vertical in ('B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)') then 'Software & Content'
-  when cc.sfdc_country_name = 'United States' and  vertical in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate') then 'Services'
+  when cc.sfdc_country_name = 'United States' and  vertical in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate', 'On-Demand Services') then 'Services'
   when cc.sfdc_country_name = 'United States' and  vertical in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   when cc.sfdc_country_name = 'United States' and  vertical in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sfdc_country_name = 'United States' and  vertical is null then 'No industry'
@@ -113,13 +113,13 @@ case
   -- UK verticals
   when cc.sales_region = 'UK' and vertical in ('Ticketing & Events', 'Travel & Hosp') then 'Ticketing/Travel'
   when cc.sales_region = 'UK' and vertical in ('Financial') then 'Financial Services'
-  when cc.sales_region = 'UK' and vertical in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate') then 'Services, Software & Content'
+  when cc.sales_region = 'UK' and vertical in ('Healthcare', 'Professional Services', 'Other Services','B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)', 'Real Estate', 'On-Demand Services') then 'Services, Software & Content'
   when cc.sales_region = 'UK' and vertical in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sales_region = 'UK' and vertical in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   
   -- Standard verticals
   when vertical in ('B2B', 'B2C Software', 'Content', 'Other Software & Content', 'B2C (Software)', 'B2B (Software)') then 'Software & Content'
-  when vertical in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate')
+  when vertical in ('Ticketing & Events', 'Financial', 'Healthcare', 'Professional Services', 'Other Services', 'Travel & Hosp', 'Real Estate', 'On-Demand Services')
   then 'Services'
   when vertical in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   when vertical in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
