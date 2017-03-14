@@ -75,4 +75,4 @@ from sales.salesforce ss
 JOIN country_code as cc ON ss.opportunity_merchant_country = cc.sfdc_country_name
 JOIN team_role as usr ON usr.sales_owner = ss.opportunity_owner
 WHERE
-opportunity_stage <> 'Lost'
+opportunity_stage NOT IN ('Lost', 'Duplicate')
