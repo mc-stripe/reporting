@@ -99,7 +99,7 @@ select
   -- NorthernEU
   when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('DE','AT','CH') then 'DACH'
   when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('BE','NL','LU') then 'BENELUX'
-  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('NO', 'FI', 'SE', 'DK', 'IS') then 'BENELUX'  
+  when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('NO', 'FI', 'SE', 'DK', 'IS') then 'NORDICS'  
   -- AU/NZ
   when cc.sales_region = 'AU' then cc.sfdc_country_name
   -- SG
