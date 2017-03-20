@@ -32,6 +32,7 @@ capture_date,
 ap.sales_merchant_id as sales_merchant_id,
 'new biz' AS sales_category,
 sales_funnel__activation_date as sales_activation_date,
+sales_funnel__activation_date as orig_activation, 
 sum(case 
    when datediff('d', sales_funnel__activation_date, capture_date) >= 0 and datediff('d', sales_funnel__activation_date, capture_date) < 366 and upsells.effective_activation_date::date is null then 1 * ap.npv_usd_fixed / 100 -- no upsell 99.9%
    when datediff('d', sales_funnel__activation_date, capture_date) >= 0 and datediff('d', sales_funnel__activation_date, capture_date) < 366 and datediff('d', upsells.effective_activation_date::date, capture_date) < 0 then 1 * ap.npv_usd_fixed / 100 -- upsell not started
@@ -49,7 +50,7 @@ and
                                --capture_date < '2017-02-12' and
 
 m.sales__is_sold = true
-group by 1,2,3,4,5),
+group by 1,2,3,4,5,6),
 
 upsell_processing as (
 select
@@ -58,6 +59,7 @@ capture_date,
 ap.sales_merchant_id as sales_merchant_id,
 'upsell' AS sales_category,
 upsells.effective_activation_date::date as sales_activation_date,
+sales_funnel__activation_date as orig_activation,
 sum(case 
    when datediff('d', upsells.effective_activation_date::date, capture_date) >= 0 and datediff('d', upsells.effective_activation_date::date, capture_date) < 366 then pct_share_of_npv * ap.npv_usd_fixed / 100 -- upsell and original sale overlap
    else 0 
@@ -74,7 +76,7 @@ and
  
 m.sales__is_sold = true
 
-group by 1,2,3,4,5), 
+group by 1,2,3,4,5,6), 
 
 
 /**********************************
@@ -101,7 +103,8 @@ select
 sales_merchant_id,
 sales_category, 
 sales_activation_date,
-datediff('day', pv.sales_activation_date, '2017-02-19') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
+datediff('day', pv.sales_activation_date, '2017-03-19') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
+orig_activation,
 first_year_npv,
 first_year_npv/first_year_sold_cumulative_pct as first_year_est_npv
 from
@@ -109,17 +112,19 @@ from
 sales_merchant_id,
 sales_category, 
 sales_activation_date,
+orig_activation,
 sum(first_year_sold_npv_usd_fx) as first_year_npv
-from processing_volume group by 1,2,3) pv 
+from processing_volume group by 1,2,3,4) pv 
 
 
-inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-02-19')  -- HAVE TO SPECIFY THE DATE
+inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-03-19')  -- HAVE TO SPECIFY THE DATE
 where first_year_npv > 0),
 
 daily_backlog as (select
 dateadd('day', curve.days_since_activation, sales_activation_date) as fcst_date, 
 sales_merchant_id, 
-sales_category, 
+sales_category,
+orig_activation,
 sales_activation_date,
 first_year_est_npv * first_year_sold_pct as backlog_npv
 from backlog_summary bs 
@@ -200,7 +205,7 @@ end
   case when datediff('d', sales_activation_date, capture_date) >= 0 and datediff('d', sales_activation_date, capture_date) < 91 then 1 else 0 end as ninety_day_live,
   case when datediff('d', sales_activation_date, capture_date) >= 0 and datediff('d', sales_activation_date, capture_date) < 366 then 1 else 0 end as first_year_sold,
   COALESCE(SUM(first_year_sold_npv_usd_fx), 0) AS npv_fixed_fx,
-  case when sales_activation_date >= '2017-01-01' and sales_category = 'new biz' then 1 else 0 end as newNPV
+  case when orig_activation > '2016-12-31' then 1 else 0 end as newNPV
 FROM processing_volume pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
@@ -283,7 +288,7 @@ end
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 91 then 1 else 0 end as ninety_day_live,
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 366 then 1 else 0 end as first_year_sold,
   COALESCE(SUM(backlog_npv), 0) AS npv_fixed_fx,
-  case when sales_activation_date >= '2017-01-01' and sales_category = 'new biz' then 1 else 0 end as newNPV
+  case when orig_activation > '2016-12-31' and fcst_date <='2017-12-31' then 1 else 0 end as newNPV
 FROM daily_backlog pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
