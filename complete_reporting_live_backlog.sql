@@ -245,7 +245,7 @@ select
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry is null then 'No industry'
-  when cc.sfdc_country_name = 'Canada' then 'Canada'  
+  when cc.sfdc_country_name = 'Canada' then 'Canada'  /******* SOMETHING STRANGE HERE *********/
   -- SouthernEU
   when cc.sales_region = 'Southern EU' then cc.sfdc_country_name
   -- NorthernEU
