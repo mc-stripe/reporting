@@ -103,7 +103,7 @@ select
 sales_merchant_id,
 sales_category, 
 sales_activation_date,
-datediff('day', pv.sales_activation_date, '2017-03-19') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
+datediff('day', pv.sales_activation_date, '2017-03-26') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
 orig_activation,
 first_year_npv,
 first_year_npv/first_year_sold_cumulative_pct as first_year_est_npv
@@ -117,7 +117,7 @@ sum(first_year_sold_npv_usd_fx) as first_year_npv
 from processing_volume group by 1,2,3,4) pv 
 
 
-inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-03-19')  -- HAVE TO SPECIFY THE DATE
+inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-03-26')  -- HAVE TO SPECIFY THE DATE
 where first_year_npv > 0),
 
 daily_backlog as (select
@@ -162,7 +162,7 @@ select
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry is null then 'No industry'
-  when cc.sfdc_country_name = 'United States' then 'CA'  
+  when cc.sfdc_country_name = 'United States' then 'other'  
   -- SouthernEU
   when cc.sales_region = 'Southern EU' then cc.sfdc_country_name
   -- NorthernEU
@@ -245,7 +245,7 @@ select
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry is null then 'No industry'
-  when cc.sfdc_country_name = 'Canada' then 'Canada'  /******* SOMETHING STRANGE HERE *********/
+  when cc.sfdc_country_name = 'United States' then 'other'  /******* SOMETHING STRANGE HERE *********/
   -- SouthernEU
   when cc.sales_region = 'Southern EU' then cc.sfdc_country_name
   -- NorthernEU
