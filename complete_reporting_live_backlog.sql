@@ -162,7 +162,7 @@ select
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry is null then 'No industry'
-  when cc.sfdc_country_name = 'United States' then 'other'  
+  when cc.sfdc_country_name = 'Canada' then 'CA'  
   -- SouthernEU
   when cc.sales_region = 'Southern EU' then cc.sfdc_country_name
   -- NorthernEU
@@ -245,7 +245,7 @@ select
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Government', 'EDU', 'Non-Profit', 'Utilities', 'Other Public Sector') then 'Public Sector'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry in ('Fashion', 'Food & Bev', 'Manufacturing', 'Other Retail') then 'Retail'
   when cc.sfdc_country_name = 'United States' and  m.sales__industry is null then 'No industry'
-  when cc.sfdc_country_name = 'United States' then 'other'  /******* SOMETHING STRANGE HERE *********/
+  when cc.sfdc_country_name = 'Canada' then 'CA'  
   -- SouthernEU
   when cc.sales_region = 'Southern EU' then cc.sfdc_country_name
   -- NorthernEU
