@@ -129,13 +129,13 @@ sales_activation_date,
 first_year_est_npv * first_year_sold_pct as backlog_npv
 from backlog_summary bs 
 cross join backlog_curve as curve
-where (curve.days_since_activation between bs.days_since_activation and 365))
+where (curve.days_since_activation between bs.days_since_activation and 365)),
 
 
 /************************************* 
 Create formatted output adding in all the information that is useful for reporting 
 **************************************/ 
-
+user_level_table
 select 
   'weekly_processing' as data_type,
   to_char(date_trunc('year', capture_date),'YYYY') as year,
