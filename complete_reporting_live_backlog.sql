@@ -45,9 +45,9 @@ from aggregates.payments ap
 JOIN dim.merchants AS m ON ap.sales_merchant_id = m._id
 LEFT JOIN current_upsells as upsells ON upsells.sales_merchant_id = ap.sales_merchant_id
 where
-capture_date > '2016-09-30'
+capture_date >= '2017-01-01'
 and 
-                               --capture_date < '2017-02-12' and
+                               capture_date < '2017-04-16' and
 
 m.sales__is_sold = true
 group by 1,2,3,4,5,6),
@@ -70,9 +70,9 @@ from aggregates.payments ap
 JOIN dim.merchants AS m ON ap.sales_merchant_id = m._id
 INNER JOIN current_upsells as upsells ON upsells.sales_merchant_id = ap.sales_merchant_id
 where
-capture_date > '2016-09-30'
+capture_date >= '2017-01-01'
 and 
-                      --capture_date < '2017-02-12' and
+                               capture_date < '2017-04-16' and
  
 m.sales__is_sold = true
 
@@ -129,13 +129,14 @@ sales_activation_date,
 first_year_est_npv * first_year_sold_pct as backlog_npv
 from backlog_summary bs 
 cross join backlog_curve as curve
-where (curve.days_since_activation between bs.days_since_activation and 365)),
+where (curve.days_since_activation between bs.days_since_activation and 365))
 
 
 /************************************* 
 Create formatted output adding in all the information that is useful for reporting 
-**************************************/ 
 user_level_table
+**************************************/ 
+
 select 
   'weekly_processing' as data_type,
   to_char(date_trunc('year', capture_date),'YYYY') as year,
