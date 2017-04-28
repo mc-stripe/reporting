@@ -16,8 +16,21 @@ backlog_curve as (
 country_code as(
    select * from usertables.mc_country_codes_csv),
 -- team role and location data [MAKE SURE THIS IS UP TO DATE]
-team_role as(
-   select * from usertables.mc_team_role_csv),
+team_role as(select 
+sales__owner as sales_owner,
+'' as location,
+case 
+  when sales__owner_role LIKE '%NBA%' THEN 'NBA'
+ELSE 'AE' END AS role,
+case 
+  when sales__owner_role LIKE '%HUB%' THEN 'Hub'
+ELSE 'In-country' END AS team,
+sales__owner_role as full_role_detail
+from dim.merchants
+where
+ sales__owner_role NOT LIKE '%AM%'
+ AND
+ sales__owner_role NOT IN ('INACTIVE', 'NONSALES', 'SALESOPS')),
 
 -- load the sales_merchant_id end dates for backlog query and sales override activation date
 special_dates as (
