@@ -9,7 +9,7 @@ country_code as(
 select * from usertables.mc_country_codes_csv),
 -- team role and location data [MAKE SURE THIS IS UP TO DATE]
 team_role as(select 
-sales__owner as sales_owner,
+distinct sales__owner as sales_owner,
 '' as location,
 case 
   when sales__owner_role LIKE '%NBA%' THEN 'NBA'
