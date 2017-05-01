@@ -7,14 +7,29 @@ select * from usertables.mc_backlog_master_global_csv
 -- country detail mapping
 country_code as(
 select * from usertables.mc_country_codes_csv),
--- team mapping
-team_role as(
-select * from usertables.mc_team_role_csv),
+-- team role and location data [MAKE SURE THIS IS UP TO DATE]
+team_role as(select 
+sales__owner as sales_owner,
+'' as location,
+case 
+  when sales__owner_role LIKE '%NBA%' THEN 'NBA'
+ELSE 'AE' END AS role,
+case 
+  when sales__owner_role LIKE '%HUB%' THEN 'Hub'
+ELSE 'In-country' END AS team,
+sales__owner_role as full_role_detail
+from dim.merchants
+where
+ sales__owner_role NOT LIKE '%AM%'
+ AND
+ sales__owner_role NOT IN ('INACTIVE', 'NONSALES', 'SALESOPS')),
+
 
 /** Opti-calculations **/ 
 
 daily_pipeline as (select  
 dateadd(day, curve.day_count, pipe.opportunity_expected_go_live_date_date) as fcst_date,
+opportunity_created_date_date as opportunity_created_date_date,               
 'OPTI__' || pipe.opportunity as sales_merchant_id,
 pipe.opportunity_owner as owner,
 pipe.opportunity_name as merchant_name, 
@@ -28,6 +43,7 @@ from (
 SELECT 
     salesforcemerchants.opportunity AS "opportunity",
     salesforcemerchants.opportunity_name AS "opportunity_name",
+    DATE(salesforcemerchants.opportunity_created_date) AS "opportunity_created_date_date",  
     DATE(salesforcemerchants.opportunity_close_date) AS "opportunity_close_date_date",
     salesforcemerchants.opportunity_owner AS "opportunity_owner",
     salesforcemerchants.opportunity_type AS "opportunity_type",
@@ -51,12 +67,13 @@ NEED TO UPDATE DATES BELOW
 ********/
     
     
+
 (merchants.sales_funnel__activation_date IS NULL OR merchants.sales_funnel__activation_date >= TIMESTAMP '2017-02-19')
 AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-02-19' -- include things that may be going live this week
 AND salesforcemerchants.opportunity_expected_go_live_date <= TIMESTAMP '2017-12-31' -- include all opportunities expected to live this year
 AND salesforcemerchants.opportunity_stage in ('Negotiating', 'Discovering Needs', 'Validating Fit', 'Proposing Solution', 'Onboarding', 'Live')
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
 ORDER BY 8
  )  as pipe 
 cross join usertables.day_backlog_curve as curve
@@ -137,7 +154,11 @@ end
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 91 then 1 else 0 end as ninety_day_live,
   case when datediff('d', sales_activation_date, fcst_date) >= 0 and datediff('d', sales_activation_date, fcst_date) < 366 then 1 else 0 end as first_year_sold,
   COALESCE(SUM(pipeline_npv), 0) AS npv_fixed_fx,
-  case when sales_activation_date >= '2017-01-01' AND opportunity_type <> 'Existing Customer' then 1 else 0 end as newNPV
+  case when sales_activation_date >= '2017-01-01' AND opportunity_type <> 'Existing Customer' then 1 else 0 end as newNPV,
+  case when date_trunc('quarter', sales_activation_date) = date_trunc('quarter',current_date-5) and date_trunc('quarter', min(opportunity_created_date_date)) = date_trunc('quarter',current_date-5) then 1 else 0 end as in_quarter_opportunity
+
+  
+  
 FROM daily_pipeline dp
 JOIN country_code as cc ON dp.merchant_country = cc.sfdc_country_name
 JOIN team_role as usr ON usr.sales_owner = dp.owner
