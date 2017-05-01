@@ -68,8 +68,8 @@ NEED TO UPDATE DATES BELOW
     
     
 
-(merchants.sales_funnel__activation_date IS NULL)
-AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-02-19' -- include things that may be going live this week
+(merchants.sales_funnel__activation_date IS NULL or merchants.sales_funnel__activation_date >= '2017-04-29')
+AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-04-29' -- include things that may be going live this week
 AND salesforcemerchants.opportunity_expected_go_live_date <= TIMESTAMP '2017-12-31' -- include all opportunities expected to live this year
 AND salesforcemerchants.opportunity_stage in ('Negotiating', 'Discovering Needs', 'Validating Fit', 'Proposing Solution', 'Onboarding', 'Live')
 
