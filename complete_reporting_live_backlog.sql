@@ -46,14 +46,14 @@ special_dates as (
    group by 1
 ),
 
-in_qtr_opportunities as (
-   select 
-      stripe_parent_merchant_id as sales_merchant_id
-   from sales.salesforce 
-   where 
-      
-)
-
+-- find the first date that the user was input in salesforce so that we can determine if it is window money or not
+user_first_contact as (
+   select
+      stripe_parent_merchant_id as sales_merchant_id,
+      min(opportunity_created_date) as first_opportunity_created_date
+   from sales.salesforce
+   group by 1 
+),
 
 
 /**********************************
@@ -82,9 +82,9 @@ non_upsell_processing as (
       left join current_upsells as upsells ON upsells.sales_merchant_id = ap.sales_merchant_id
       left join special_dates as adj_start_date ON ap.sales_merchant_id = adj_start_date.sales_merchant_id -- include manual adjustment for start date
    where
-      capture_date >= '2017-01-01'
+      capture_date >= '2016-04-01'
    and 
-                               capture_date < '2017-04-16' and
+                               capture_date < '2017-04-30' and
 
    m.sales__is_sold = true
    group by 1,2,3,4,5,6
@@ -108,9 +108,9 @@ from aggregates.payments ap
 JOIN dim.merchants AS m ON ap.sales_merchant_id = m._id
 INNER JOIN current_upsells as upsells ON upsells.sales_merchant_id = ap.sales_merchant_id
 where
-capture_date >= '2017-01-01'
+capture_date >= '2016-04-01'
 and 
-                               capture_date < '2017-04-16' and
+                               capture_date < '2017-04-30' and
  
 m.sales__is_sold = true
 
@@ -141,7 +141,7 @@ select
 sales_merchant_id,
 sales_category, 
 sales_activation_date,
-datediff('day', pv.sales_activation_date, '2017-03-26') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
+datediff('day', pv.sales_activation_date, '2017-04-29') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
 orig_activation,
 first_year_npv,
 first_year_npv/first_year_sold_cumulative_pct as first_year_est_npv
@@ -155,7 +155,7 @@ sum(first_year_sold_npv_usd_fx) as first_year_npv
 from processing_volume group by 1,2,3,4) pv 
 
 
-inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-03-26')  -- HAVE TO SPECIFY THE DATE
+inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-04-29')  -- HAVE TO SPECIFY THE DATE
 where first_year_npv > 0),
 
 daily_backlog as (select
@@ -211,7 +211,7 @@ select
   -- AU/NZ
   when cc.sales_region = 'AU' then cc.sfdc_country_name
   -- SG
-  when cc.sales_region = 'SG' then cc.sfdc_country_name
+  when cc.sales_region = 'SG' then m.sales__industry
   when cc.sales_region = 'New Markets' then cc.sfdc_country_name
   -- IE
   when cc.sales_region = 'IE' then cc.sfdc_country_name
@@ -237,7 +237,7 @@ end
   m.sales__owner as owner,
   usr.role as sales_role,
   usr.team AS sales_location,
-  sales_merchant_id as sales_merchant_id,
+  pv.sales_merchant_id as sales_merchant_id,
   m.sales__name AS merchant_name,
   sales_category,
   sales_activation_date,
@@ -245,13 +245,16 @@ end
   case when datediff('d', sales_activation_date, capture_date) >= 0 and datediff('d', sales_activation_date, capture_date) < 366 then 1 else 0 end as first_year_sold,
   COALESCE(SUM(first_year_sold_npv_usd_fx), 0) AS npv_fixed_fx,
   case when orig_activation > '2016-12-31' then 1 else 0 end as newNPV,
-  case when date_trunc('quarter', sales_activation_date) = date_trunc('quarter',current_date-5) and date_trunc('quarter', min(opportunity_created_date)) = date_trunc('quarter',current_date-5) then 1 else 0 end as in_quarter_opportunity
+  case when date_trunc('quarter', sales_activation_date) = date_trunc('quarter',current_date-5) and date_trunc('quarter', first_opportunity_created_date) = date_trunc('quarter',current_date-5) then 1 else 0 end as in_quarter_opportunity
 
 FROM processing_volume pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
 JOIN team_role as usr ON usr.sales_owner = m.sales__owner
-LEFT JOIN sales.salesforce as sfdc ON sfdc.stripe_parent_merchant_id ON m._id
+LEFT JOIN user_first_contact as sfdc ON sfdc.sales_merchant_id = m._id
+where
+capture_date >= '2017-01-01' 
+
 
 GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22,23
 
@@ -298,7 +301,7 @@ select
   -- AU/NZ
   when cc.sales_region = 'AU' then cc.sfdc_country_name
   -- SG
-  when cc.sales_region = 'SG' then cc.sfdc_country_name
+  when cc.sales_region = 'SG' then m.sales__industry
   when cc.sales_region = 'New Markets' then cc.sfdc_country_name
   -- IE
   when cc.sales_region = 'IE' then cc.sfdc_country_name
@@ -339,13 +342,14 @@ end
     else 0 end as first_year_sold,
 
   COALESCE(SUM(backlog_npv), 0) AS npv_fixed_fx,
-  case when orig_activation > '2016-12-31' and fcst_date <='2017-12-31' then 1 else 0 end as newNPV
-  case when date_trunc('quarter', sales_activation_date) = date_trunc('quarter',current_date-5) and date_trunc('quarter', min(opportunity_created_date)) = date_trunc('quarter',current_date-5) then 1 else 0 end as in_quarter_opportunity
+  case when orig_activation > '2016-12-31' and fcst_date <='2017-12-31' then 1 else 0 end as newNPV,
+  case when date_trunc('quarter', sales_activation_date) = date_trunc('quarter',current_date-5) and date_trunc('quarter', first_opportunity_created_date) = date_trunc('quarter',current_date-5) then 1 else 0 end as in_quarter_opportunity
 FROM daily_backlog pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
 JOIN team_role as usr ON usr.sales_owner = m.sales__owner
 LEFT JOIN special_dates as early_ending_users ON early_ending_users.sales_merchant_id = pv.sales_merchant_id
-LEFT JOIN sales.salesforce as sfdc ON sfdc.stripe_parent_merchant_id ON m._id
-
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22
+LEFT JOIN user_first_contact as sfdc ON sfdc.sales_merchant_id = m._id
+where
+fcst_date >= '2017-01-01' 
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22,23
