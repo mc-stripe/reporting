@@ -7,21 +7,9 @@ select * from usertables.mc_backlog_master_global_csv
 country_code as(
 select * from usertables.mc_country_codes_csv),
 -- team role and location data [MAKE SURE THIS IS UP TO DATE]
-team_role as(select 
-distinct sales__owner as sales_owner,
-'' as location,
-case 
-  when sales__owner_role LIKE '%NBA%' THEN 'NBA'
-ELSE 'AE' END AS role,
-case 
-  when sales__owner_role LIKE '%HUB%' THEN 'Hub'
-ELSE 'In-country' END AS team,
-sales__owner_role as full_role_detail
-from dim.merchants
-where
- sales__owner_role NOT LIKE '%AM%'
- AND
- sales__owner_role NOT IN ('INACTIVE', 'NONSALES', 'SALESOPS')),
+team_role as(
+select * from usertables.mc_team_role_csv
+),
 
 
 -- find the first date that the user was input in salesforce so that we can determine if it is window money or not
@@ -63,7 +51,7 @@ SELECT
          else 'lost' end as opportunity_status, 
     opportunity_industry AS "vertical",
     salesforcemerchants.opportunity_merchant_country AS "opportunity_merchant_country",
-    case when DATE(merchants.sales_funnel__activation_date) < '2017-04-30' THEN 1 ELSE 0 END AS "live_or_not", -- check
+    case when DATE(merchants.sales_funnel__activation_date) < '2017-05-06' THEN 1 ELSE 0 END AS "live_or_not", -- check
     DATE(merchants.sales_funnel__activation_date) AS "unified_funnel__activation_date_date",
     --salesforcemerchants.opportunity_stage AS "opportunity_stage",
     (COALESCE(COALESCE( ( SUM(DISTINCT (CAST(FLOOR(COALESCE(salesforcemerchants.opportunity_amount,0)*(1000000*1.0)) AS DECIMAL(38,0))) + CAST(STRTOL(LEFT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))* 1.0e8 + CAST(STRTOL(RIGHT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0)) ) - SUM(DISTINCT CAST(STRTOL(LEFT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))* 1.0e8 + CAST(STRTOL(RIGHT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))) )  / (1000000*1.0), 0), 0))*(avg(opportunity_probability)/100) AS "mes_opportunity_amount",
@@ -77,8 +65,8 @@ NEED TO UPDATE DATES BELOW
     
     
 
-(merchants.sales_funnel__activation_date IS NULL or merchants.sales_funnel__activation_date >= '2017-04-30')
-AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-04-30' -- include things that may be going live this week
+(merchants.sales_funnel__activation_date IS NULL or merchants.sales_funnel__activation_date >= '2017-05-06')
+AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-05-06' -- include things that may be going live this week
 AND salesforcemerchants.opportunity_expected_go_live_date <= TIMESTAMP '2017-12-31' -- include all opportunities expected to live this year
 AND salesforcemerchants.opportunity_stage in ('Negotiating', 'Discovering Needs', 'Validating Fit', 'Proposing Solution', 'Onboarding', 'Live')
 
@@ -127,9 +115,9 @@ select
   when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('BE','NL','LU') then 'BENELUX'
   when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('NO', 'FI', 'SE', 'DK', 'IS') then 'NORDICS'  
   -- AU/NZ
-  when cc.sales_region = 'AU' then cc.sfdc_country_name
+  when cc.sales_region = 'AU/NZ' then cc.sfdc_country_name
   -- SG
-  when cc.sales_region = 'SG' then cc.sfdc_country_name
+  when cc.sales_region = 'SG/HK' then cc.sfdc_country_name
   when cc.sales_region = 'New Markets' then cc.sfdc_country_name
   -- IE
   when cc.sales_region = 'IE' then cc.sfdc_country_name
