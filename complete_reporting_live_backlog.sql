@@ -16,21 +16,10 @@ backlog_curve as (
 country_code as(
    select * from usertables.mc_country_codes_csv),
 -- team role and location data [MAKE SURE THIS IS UP TO DATE]
-team_role as(select 
-distinct sales__owner as sales_owner,
-'' as location,
-case 
-  when sales__owner_role LIKE '%NBA%' THEN 'NBA'
-ELSE 'AE' END AS role,
-case 
-  when sales__owner_role LIKE '%HUB%' THEN 'Hub'
-ELSE 'In-country' END AS team,
-sales__owner_role as full_role_detail
-from dim.merchants
-where
- sales__owner_role NOT LIKE '%AM%'
- AND
- sales__owner_role NOT IN ('INACTIVE', 'NONSALES', 'SALESOPS')),
+team_role as(
+select * from usertables.mc_team_role_csv
+
+),
 
 -- load the sales_merchant_id end dates for backlog query and sales override activation date
 special_dates as (
@@ -84,7 +73,7 @@ non_upsell_processing as (
    where
       capture_date >= '2016-04-01'
    and 
-                               capture_date < '2017-04-30' and
+                               capture_date < '2017-05-07' and
 
    m.sales__is_sold = true
    group by 1,2,3,4,5,6
@@ -110,7 +99,7 @@ INNER JOIN current_upsells as upsells ON upsells.sales_merchant_id = ap.sales_me
 where
 capture_date >= '2016-04-01'
 and 
-                               capture_date < '2017-04-30' and
+                               capture_date < '2017-05-07' and
  
 m.sales__is_sold = true
 
@@ -141,7 +130,7 @@ select
 sales_merchant_id,
 sales_category, 
 sales_activation_date,
-datediff('day', pv.sales_activation_date, '2017-04-29') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
+datediff('day', pv.sales_activation_date, '2017-05-07') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
 orig_activation,
 first_year_npv,
 first_year_npv/first_year_sold_cumulative_pct as first_year_est_npv
@@ -155,7 +144,7 @@ sum(first_year_sold_npv_usd_fx) as first_year_npv
 from processing_volume group by 1,2,3,4) pv 
 
 
-inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-04-29')  -- HAVE TO SPECIFY THE DATE
+inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-05-07')  -- HAVE TO SPECIFY THE DATE
 where first_year_npv > 0),
 
 daily_backlog as (select
