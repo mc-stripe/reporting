@@ -73,7 +73,7 @@ non_upsell_processing as (
    where
       capture_date >= '2016-04-01'
    and 
-                               capture_date < '2017-05-07' and
+                               capture_date < '2017-05-11' and
 
    m.sales__is_sold = true
    group by 1,2,3,4,5,6
@@ -99,7 +99,7 @@ INNER JOIN current_upsells as upsells ON upsells.sales_merchant_id = ap.sales_me
 where
 capture_date >= '2016-04-01'
 and 
-                               capture_date < '2017-05-07' and
+                               capture_date < '2017-05-11' and
  
 m.sales__is_sold = true
 
@@ -130,7 +130,7 @@ select
 sales_merchant_id,
 sales_category, 
 sales_activation_date,
-datediff('day', pv.sales_activation_date, '2017-05-07') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
+datediff('day', pv.sales_activation_date, '2017-05-11') as days_since_activation,      -- UPDATE THIS TO THE LAST DAY OF PROCESSING
 orig_activation,
 first_year_npv,
 first_year_npv/first_year_sold_cumulative_pct as first_year_est_npv
@@ -144,7 +144,7 @@ sum(first_year_sold_npv_usd_fx) as first_year_npv
 from processing_volume group by 1,2,3,4) pv 
 
 
-inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-05-07')  -- HAVE TO SPECIFY THE DATE
+inner join backlog_curve bc on bc.days_since_activation = datediff('day', pv.sales_activation_date, '2017-05-11')  -- HAVE TO SPECIFY THE DATE
 where first_year_npv > 0),
 
 daily_backlog as (select
@@ -198,9 +198,9 @@ select
   when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('Belgium','Netherlands','Luxembourg') then 'BENELUX'
   when cc.sales_region = 'Northern EU' and cc.sfdc_country_name in ('Norway', 'Finland', 'Sweden', 'Denmark', 'Iceland') then 'NORDICS'  
   -- AU/NZ
-  when cc.sales_region = 'AU' then cc.sfdc_country_name
+  when cc.sales_region = 'AU/NZ' then cc.sfdc_country_name
   -- SG
-  when cc.sales_region = 'SG' then m.sales__industry
+  when cc.sales_region = 'SG/HK' then m.sales__industry
   when cc.sales_region = 'New Markets' then cc.sfdc_country_name
   -- IE
   when cc.sales_region = 'IE' then cc.sfdc_country_name
@@ -288,9 +288,9 @@ select
   when cc.sales_region = 'Northern EU' and cc.country_code in ('BE','NL','LU') then 'BENELUX'
   when cc.sales_region = 'Northern EU' and cc.country_code in ('NO', 'FI', 'SE', 'DK', 'IS') then 'NORDICS'  
   -- AU/NZ
-  when cc.sales_region = 'AU' then cc.sfdc_country_name
+  when cc.sales_region = 'AU/NZ' then cc.sfdc_country_name
   -- SG
-  when cc.sales_region = 'SG' then m.sales__industry
+  when cc.sales_region = 'SG/HK' then m.sales__industry
   when cc.sales_region = 'New Markets' then cc.sfdc_country_name
   -- IE
   when cc.sales_region = 'IE' then cc.sfdc_country_name
