@@ -51,7 +51,7 @@ SELECT
          else 'lost' end as opportunity_status, 
     opportunity_industry AS "vertical",
     salesforcemerchants.opportunity_merchant_country AS "opportunity_merchant_country",
-    case when DATE(merchants.sales_funnel__activation_date) < '2017-05-06' THEN 1 ELSE 0 END AS "live_or_not", -- check
+    case when DATE(merchants.sales_funnel__activation_date) < '2017-06-11' THEN 1 ELSE 0 END AS "live_or_not", -- check
     DATE(merchants.sales_funnel__activation_date) AS "unified_funnel__activation_date_date",
     --salesforcemerchants.opportunity_stage AS "opportunity_stage",
     (COALESCE(COALESCE( ( SUM(DISTINCT (CAST(FLOOR(COALESCE(salesforcemerchants.opportunity_amount,0)*(1000000*1.0)) AS DECIMAL(38,0))) + CAST(STRTOL(LEFT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))* 1.0e8 + CAST(STRTOL(RIGHT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0)) ) - SUM(DISTINCT CAST(STRTOL(LEFT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))* 1.0e8 + CAST(STRTOL(RIGHT(MD5(CONVERT(VARCHAR,salesforcemerchants.opportunity)),15),16) AS DECIMAL(38,0))) )  / (1000000*1.0), 0), 0))*(avg(opportunity_probability)/100) AS "mes_opportunity_amount",
@@ -65,8 +65,8 @@ NEED TO UPDATE DATES BELOW
     
     
 
-(merchants.sales_funnel__activation_date IS NULL or merchants.sales_funnel__activation_date >= '2017-05-06')
-AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-05-06' -- include things that may be going live this week
+(merchants.sales_funnel__activation_date IS NULL or merchants.sales_funnel__activation_date >= '2017-06-11')
+AND salesforcemerchants.opportunity_expected_go_live_date >= TIMESTAMP '2017-06-11' -- include things that may be going live this week
 AND salesforcemerchants.opportunity_expected_go_live_date <= TIMESTAMP '2017-12-31' -- include all opportunities expected to live this year
 AND salesforcemerchants.opportunity_stage in ('Negotiating', 'Discovering Needs', 'Validating Fit', 'Proposing Solution', 'Onboarding', 'Live')
 
