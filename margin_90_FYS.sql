@@ -3,8 +3,13 @@ with country_code as(
 -- team role and location data [MAKE SURE THIS IS UP TO DATE]
 team_role as(
 select * from usertables.mc_team_role_csv
-
 ),
+opportunity as (
+select opportunity, sum(opportunity_amount) as opportunity_amount from sales.salesforce group by 1
+),
+
+
+
 processing as (
    select
       'weekly_processing' as data_type,
@@ -104,16 +109,18 @@ end
   COALESCE(SUM(first_year_sold_revenue_fx_usd_fx), 0) AS revenue_fx_fixed_fx,
   COALESCE(SUM(first_year_sold_revenue_disputes_usd_fx), 0) AS revenue_disputes_fixed_fx,
   COALESCE(SUM(first_year_sold_revenue_other_api_usd_fx), 0) AS revenue_other_api_fixed_fx,
-  opportunity_amount
+  sum(opportunity_amount) as oportunity_amount_usd_fixed_fx
   
 
 FROM processing pv
 JOIN dim.merchants AS m ON pv.sales_merchant_id = m._id
 JOIN country_code as cc ON m.sales__merchant_country = cc.country_code
 JOIN team_role as usr ON usr.sales_owner = m.sales__owner
-JOIN sales.salesforce ss ON m.sales__sfdc_opportunity = ss.opportunity
+JOIN opportunity ss ON m.sales__sfdc_opportunity = ss.opportunity
 where
 capture_date >= '2017-01-01' 
 
 
-GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,27
+GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20--,27
+
+
